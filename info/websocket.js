@@ -99,14 +99,14 @@ ws.on("close", () => {
       });
 
       // Construct the final object
-      const seatDataObj = {
+      const availableSeatDataObj = {
         seatData: seatDataArray.filter((value) => value.status === "available"),
         ...(rootOpenAt !== null && { open_at: rootOpenAt }), // Add "open_at" only if it exists
       };
 
       console.log(
         "Transformed seat data:",
-        JSON.stringify(seatDataObj, null, 2)
+        JSON.stringify(availableSeatDataObj, null, 2)
       );
     }
   });

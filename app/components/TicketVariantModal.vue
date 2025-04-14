@@ -3,6 +3,7 @@ import type { VariantInterface } from "~~/types/concertVariantsTypes";
 import type { ConcertVariantInterface } from "~~/types/concertVariantTypes";
 import { ref, watch } from "vue";
 import { useVariantDetail } from "~~/composables/useEvent";
+import { fetchSeatData } from "~~/composables/useVariantSeatSocket";
 
 // Props
 const props = defineProps<{
@@ -50,12 +51,18 @@ const updateQuantity = (variantId: number, delta: number) => {
 };
 
 // Handle variant selection
-const selectVariant = (variantId: number) => {
+const selectVariant = async (variantId: number) => {
   const { data, error, pending } = useVariantDetail(props.concertId, variantId);
   const variantInfo = ref<ConcertVariantInterface | null>(null);
   variantInfo.value = data.value?.data ?? null;
   if (variantInfo.value?.meta !== null && variantInfo.value?.special_option) {
+    const seatData = await fetchSeatData(
+      variantInfo.value.product_id,
+      variantInfo.value.id
+    );
+    console.log(seatData);
   } else {
+    console.log("no special seat");
   }
   // const quantity = quantities.value[variantId] || 1;
   //   emit("select-variant", { variantId, quantity });

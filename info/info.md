@@ -22,11 +22,11 @@ wss://theconcert-production-user-db3.asia-southeast1.firebasedatabase.app/.ws?v=
 // wss://s-apse1a-nss-2000.asia-southeast1.firebasedatabase.app/.ws?v=5&ns=theconcert-production-user-db3
 {"t":"d","d":{"r":2,"a":"q","b":{"p":"/user/2244543","h":""}}}
 
+// the "p" : "/seat/{concert_id}/{variant_id}
 
 // db for concert seats
 // alternate namespace
 // wss://s-apse1b-nss-203.asia-southeast1.firebasedatabase.app/.ws?v=5&ns=theconcert-production-db0
-// the "p" : "/seat/{concert_id}/{variant_id}
 // use this message and find in all of the db, if fail it will return permission denied, go on the next db until the message is successful
 wss://theconcert-production-db0.asia-southeast1.firebasedatabase.app/.ws?v=5&ns=theconcert-production-db0
 wss://theconcert-production-db1.asia-southeast1.firebasedatabase.app/.ws?v=5&ns=theconcert-production-db1
@@ -38,8 +38,9 @@ wss://theconcert-production-db6.asia-southeast1.firebasedatabase.app/.ws?v=5&ns=
 wss://theconcert-production-db7.asia-southeast1.firebasedatabase.app/.ws?v=5&ns=theconcert-production-db7
 wss://theconcert-production-db8.asia-southeast1.firebasedatabase.app/.ws?v=5&ns=theconcert-production-db8
 wss://theconcert-production-db9.asia-southeast1.firebasedatabase.app/.ws?v=5&ns=theconcert-production-db9
+{"t":"d","d":{"r":3,"a":"q","b":{"p":"/seat/{  variantInfo.value.product_id}/{  variantInfo.value.id}","h":""}}}
+<!-- {"t":"d","d":{"r":3,"a":"q","b":{"p":"/seat/4073/37963","h":""}}} -->
 // {"t":"d","d":{"r":2,"a":"g","b":{"p":"/seat/4051/36755","q":{"l":80,"vf":"l","i":".key"}}}} optional query
-{"t":"d","d":{"r":3,"a":"q","b":{"p":"/seat/4073/37963","h":""}}}
 
 const token =
   "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjIyNDQ1NDMsImRhdGEiOnsicm9sZSI6InVzZXIiLCJncm91cCI6MX0sImlhdCI6MTc0NDM0MTA2MSwiZXhwIjoxNzQ3MDMxMDYxfQ.PONArirdQFH51WzNICmTnTP_lR7SKW66aVhq5wTJo2wJpCKyGk4M_Pc1jPzThTE8"; // Your full bearer token
@@ -53,24 +54,6 @@ Payload:
 Request URL: https://api.theconcert.com/carts
 Request Method: POST
 Payload:
-{
-  cart_id: 2244543,
-  products: [
-    {
-      id: 4073,
-      variant_id: 37963,
-      quantity: 1,
-      price: 1200,
-      gate_open: "2025-04-26 06:00:00",
-      zone: "A1",
-      symbol: "฿",
-      currency_code: "thb",
-      seats: [{ key: "id_1163262", id: 1163262, name: "D3" }],
-    },
-  ],
-  currency_code: "thb",
-};
-
 <!-- got seat -->
 {
     "cart_id":2244543,
