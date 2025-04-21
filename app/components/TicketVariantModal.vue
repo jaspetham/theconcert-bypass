@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { VariantInterface } from "~~/types/concertVariantsTypes";
-import type { ConcertVariantInterface } from "~~/types/concertVariantTypes";
+import type { ConcertVariantInterface, Meta } from "~~/types/concertVariantTypes";
 import { ref, watch } from "vue";
 import { useVariantDetail } from "~~/composables/useEvent";
 import { fetchSeatData } from "~~/composables/useVariantSeatSocket";
+import type { AvailableSeatDataObj, Seat } from "~~/types/concertSeatTypes";
 
 // Props
 const props = defineProps<{
@@ -15,11 +16,20 @@ const props = defineProps<{
 // Emits
 const emit = defineEmits<{
   (e: "close"): void;
-  (e: "select-variant", payload: { variantId: number; quantity: number }): void;
+  (
+    e: "select-variant",
+    payload: { variantId: number; quantity: number; selectedSeats?: Seat[] }
+  ): void;
 }>();
 
 // State for quantity selection per variant
 const quantities = ref<Record<number, number>>({});
+const isSeatMapOpen = ref(false);
+const seatData = ref<AvailableSeatDataObj | null>(null);
+const variantMeta = ref<Meta | null>(null);
+const selectedVariantId = ref<number | null>(null);
+const seatError = ref<string | null>(null);
+const variantInfo = ref<ConcertVariantInterface | null>(null);
 
 // Watch for variants change to initialize quantities
 watch(
@@ -52,20 +62,60 @@ const updateQuantity = (variantId: number, delta: number) => {
 
 // Handle variant selection
 const selectVariant = async (variantId: number) => {
-  const { data, error, pending } = useVariantDetail(props.concertId, variantId);
-  const variantInfo = ref<ConcertVariantInterface | null>(null);
+  const { data, error, pending } = await useVariantDetail(props.concertId, variantId);
   variantInfo.value = data.value?.data ?? null;
+  const quantity = quantities.value[variantId] || 1;
   if (variantInfo.value?.meta !== null && variantInfo.value?.special_option) {
-    const seatData = await fetchSeatData(
-      variantInfo.value.product_id,
-      variantInfo.value.id
-    );
-    console.log(seatData);
+    try {
+      const fetchedSeatData = await fetchSeatData(
+        variantInfo.value.product_id,
+        variantInfo.value.id
+      );
+      let parsedMeta: Meta | null = null;
+      if (typeof variantInfo.value.meta === "string") {
+        try {
+          parsedMeta = JSON.parse(variantInfo.value.meta) as Meta;
+        } catch (e) {
+          console.error("Failed to parse meta JSON:", e);
+          seatError.value = "Invalid seat map data";
+          emit("select-variant", { variantId, quantity });
+          return;
+        }
+      } else {
+        parsedMeta = variantInfo.value.meta;
+      }
+      seatData.value = fetchedSeatData;
+      variantMeta.value = parsedMeta;
+      selectedVariantId.value = variantId;
+      isSeatMapOpen.value = true;
+    } catch (err) {
+      console.error("Failed to fetch seat data:", err);
+      seatError.value = "Failed to fetch seat data";
+      emit("select-variant", { variantId, quantity });
+    }
   } else {
-    console.log("no special seat");
+    emit("select-variant", { variantId, quantity });
   }
-  // const quantity = quantities.value[variantId] || 1;
-  //   emit("select-variant", { variantId, quantity });
+};
+// Handle seat selection
+const handleSeatSelection = (selectedSeats: Seat[]) => {
+  if (selectedSeats.length > 0 && selectedVariantId.value) {
+    emit("select-variant", {
+      variantId: selectedVariantId.value,
+      quantity: quantities.value[selectedVariantId.value] || 1,
+      selectedSeats,
+    });
+    isSeatMapOpen.value = false;
+  }
+};
+
+// Close seat map
+const closeSeatMap = () => {
+  isSeatMapOpen.value = false;
+  seatData.value = null;
+  variantMeta.value = null;
+  selectedVariantId.value = null;
+  seatError.value = null;
 };
 </script>
 
@@ -180,10 +230,60 @@ const selectVariant = async (variantId: number) => {
       </div>
     </div>
   </div>
+  <!-- Seat Map Modal -->
+  <div
+    v-if="isSeatMapOpen"
+    class="fixed inset-0 w-screen h-screen bg-charcoal bg-opacity-80 flex items-center justify-center z-50"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="seat-map-title"
+    @click.self="closeSeatMap"
+  >
+    <div
+      class="bg-charcoal border-8 border-muted-white w-full h-full flex flex-col p-8 relative"
+    >
+      <button
+        class="absolute top-0 right-0 bg-neon-red text-charcoal p-2 text-lg uppercase font-bold border-b-4 border-l-4 border-charcoal"
+        @click="closeSeatMap"
+        aria-label="Close seat map"
+      >
+        <Icon name="mdi:close-thick" width="48" height="48" />
+      </button>
+
+      <h2
+        id="seat-map-title"
+        class="text-3xl uppercase font-bold border-b-4 border-olive-green mb-6 pb-2"
+      >
+        Select Seats
+      </h2>
+
+      <div
+        v-if="seatError"
+        class="text-lg uppercase border-4 border-neon-red p-4 text-center"
+      >
+        {{ seatError }}
+      </div>
+
+      <SeatMap
+        v-if="seatData && variantMeta"
+        :seat-data="seatData"
+        :meta="variantMeta"
+        :seatMin="variantInfo?.allow_order_min"
+        :seatMax="variantInfo?.allow_order_max"
+        @select-seats="handleSeatSelection"
+      />
+
+      <div
+        v-if="seatData?.seatData.length === 0"
+        class="text-lg uppercase border-4 border-neon-red p-4 text-center"
+      >
+        No Seats Available
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">
-/* Ensure text doesn't break layout */
 h2,
 h3,
 p {

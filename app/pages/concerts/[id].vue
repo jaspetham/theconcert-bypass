@@ -6,6 +6,7 @@ import { useRoute } from "vue-router";
 import TicketVariantModal from "~/components/TicketVariantModal.vue";
 import type { VariantInterface } from "~~/types/concertVariantsTypes";
 import type { Round } from "~~/types/concertRoundsTypes";
+import type { Seat } from "~~/types/concertSeatTypes";
 
 const concertId = Number(useRoute().params.id);
 const { data, error, pending } = await useEventInfo(concertId);
@@ -69,10 +70,17 @@ const fetchVariantsForRound = async (roundId: number) => {
 };
 
 // Handle variant selection
-const handleVariantSelection = (payload: { variantId: number; quantity: number }) => {
-  console.log("Selected variant:", payload);
+const handleVariantSelection = (payload: {
+  variantId: number;
+  quantity: number;
+  seatData?: Seat[];
+}) => {
+  console.log("Selected variant and seats:", payload);
   isVariantModalOpen.value = false;
-  // Proceed to checkout or store selection
+  // Proceed to checkout, e.g.:
+  // if (payload.seatData) {
+  //   // Reserve seats, proceed to payment
+  // }
 };
 
 // Handle round selection

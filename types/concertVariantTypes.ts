@@ -8,7 +8,17 @@ export interface Bench {
   millisecond: number;
   format: string;
 }
-
+export interface Meta {
+  path?: string;
+  stage: {
+    name: string;
+    color: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }[];
+}
 export interface ConcertVariantInterface {
   id: number;
   product_id: number;
@@ -59,7 +69,7 @@ export interface ConcertVariantInterface {
   image: Image;
   online_meeting: boolean;
   meetings: any[];
-  meta: string;
+  meta: string | Meta | null;
   is_child: number;
   display_status: boolean;
   display_text: string;

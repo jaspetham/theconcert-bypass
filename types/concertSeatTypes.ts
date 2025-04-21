@@ -1,12 +1,16 @@
 export interface AvailableSeatDataObj {
-  seatData: any[];
+  seatData: Seat[];
   open_at?: string | number;
 }
-
 export interface Seat {
-  id: string;
+  gourp_id: number;
+  id: number;
+  meta: string;
+  name: string;
+  open_at: number;
+  product_id: number;
+  product_variant_id: number;
   status: "available" | "reserved" | "sold";
-  [key: string]: any; // Allow additional properties
 }
 
 export interface WebSocketMessage {
