@@ -176,7 +176,9 @@ const closeSeatMap = () => {
 
             <!-- Quantity Selector -->
             <div
-              v-if="!variant.soldout_status && variant.stock > 0"
+              v-if="
+                !variant.soldout_status && variant.stock > 0 && !variant.special_option
+              "
               class="flex items-center space-x-2"
             >
               <button
@@ -210,7 +212,9 @@ const closeSeatMap = () => {
             class="mt-4 w-full bg-neon-red text-charcoal py-2 uppercase font-bold border-4 border-charcoal hover:bg-olive-green transition-colors"
             @click="selectVariant(variant.id)"
           >
-            Add to Cart
+            <p>
+              {{ variant.special_option ? "Select seats" : "Add to Cart" }}
+            </p>
           </button>
           <div
             v-else
