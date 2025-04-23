@@ -72,10 +72,26 @@ export async function fetchSeatData(
 
                   startIndex = i + 1;
                 } catch (e) {
-                  console.error(`❌ JSON parsing error in ${url}:`, e);
+                  console.error(
+                    `❌ JSON parsing error in ${url}:`,
+                    e,
+                    `Message: ${potentialJson}`
+                  );
+                  // Reset buffer to avoid accumulating garbage
+                  messageBuffer = "";
+                  startIndex = 0;
                   break;
                 }
               }
+            }else if (
+              braceCount === 0 &&
+              !/[{\s]/.test(messageBuffer[i] ?? '')
+            ) {
+              // Handle non-JSON keep-alives (e.g., "0", "3")
+              console.debug(`Ignored non-JSON message in ${url}:`, messageBuffer);
+              messageBuffer = "";
+              startIndex = 0;
+              return;
             }
           }
 
