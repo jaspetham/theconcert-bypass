@@ -6,7 +6,7 @@
       <NuxtLink to="/" class="flex gap-1 items-center">
         <NuxtImg
           width="56px"
-          densities="1x 2x 3x"
+          densities="1x 2x"
           format="webp"
           src="/icon-green.png"
           alt=""

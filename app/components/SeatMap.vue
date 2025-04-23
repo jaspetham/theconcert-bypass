@@ -2,6 +2,7 @@
 import type { Seat, AvailableSeatDataObj } from "~~/types/concertSeatTypes";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import type { Meta } from "~~/types/concertVariantTypes";
+import type { selectedSeatsPayload } from "~~/types/payloadTypes";
 
 const props = defineProps<{
   seatData: AvailableSeatDataObj;
@@ -11,10 +12,10 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "select-seats", seats: Seat[]): void;
+  (e: "select-seats", seats: selectedSeatsPayload[]): void;
 }>();
 
-const selectedSeats = ref<Seat[]>([]);
+const selectedSeats = ref<selectedSeatsPayload[]>([]);
 const toastMessage = ref<string | null>(null);
 const showToast = ref(false);
 const zoom = ref(1);
@@ -25,8 +26,6 @@ const dragStart = ref<{ x: number; y: number } | null>(null);
 const svgRef = ref<SVGSVGElement | null>(null);
 
 const toggleSeat = (seat: Seat) => {
-  if (seat.status !== "available") return;
-
   const index = selectedSeats.value.findIndex((s) => s.id === seat.id);
   if (index >= 0) {
     selectedSeats.value.splice(index, 1);
@@ -41,7 +40,11 @@ const toggleSeat = (seat: Seat) => {
         toastMessage.value = null;
       }, 3000); // Hide toast after 3 seconds
     } else {
-      selectedSeats.value.push(seat);
+      selectedSeats.value.push({
+        key: `id_${seat.id}`,
+        id: seat.id,
+        name: seat.name,
+      });
     }
   }
 };

@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { useProfileStore } from "../../stores/useProfileStore";
-const profileStore = storeToRefs(useProfileStore());
-const user = profileStore.getUserData.value;
+import { useUserProfile } from "~~/composables/useUserProfile";
+import type { UserInterface } from "~~/types/userTypes";
+const { data } = await useUserProfile();
+const user: ComputedRef<UserInterface | null> = computed(
+  () => data.value?.response ?? null
+);
 </script>
 
 <template>
@@ -11,9 +14,10 @@ const user = profileStore.getUserData.value;
       <section class="border-2 border-white p-6 flex flex-col gap-4 h-full">
         <div class="flex items-center gap-6">
           <NuxtImg
+            densities="1x 2x"
             v-if="user.avatar?.url"
             :src="user.avatar.url"
-            alt="User Avatar"
+            alt="user Avatar"
             width="96px"
             height="96px"
             format="webp"
@@ -35,7 +39,18 @@ const user = profileStore.getUserData.value;
           <p><strong>Gender:</strong> {{ user.gender }}</p>
           <p>
             <strong>Birthday:</strong>
-            {{ new Date(user.birthday).toLocaleDateString() }}
+            {{
+              new Date(user.birthday).toLocaleString("en-US", {
+                timeZone: "Asia/Bangkok",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+              })
+            }}
           </p>
         </div>
       </section>
@@ -51,11 +66,33 @@ const user = profileStore.getUserData.value;
         <div><strong>Verified:</strong> {{ user.is_verify ? "YES" : "NO" }}</div>
         <div>
           <strong>Registered:</strong>
-          {{ new Date(user.created_at).toLocaleDateString() }}
+          {{
+            new Date(user.created_at).toLocaleString("en-US", {
+              timeZone: "Asia/Bangkok",
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: true,
+            })
+          }}
         </div>
         <div>
           <strong>Last Login:</strong>
-          {{ new Date(user.last_login_at).toLocaleString() }}
+          {{
+            new Date(user.last_login_at).toLocaleString("en-US", {
+              timeZone: "Asia/Bangkok",
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: true,
+            })
+          }}
         </div>
         <div><strong>Language:</strong> {{ user.lang.toUpperCase() }}</div>
         <div class="col-span-2"><strong>Referral:</strong> {{ user.referral }}</div>
@@ -69,7 +106,7 @@ const user = profileStore.getUserData.value;
       </section>
     </div>
     <div v-else>
-      <h1 class="text-3xl">No User Data</h1>
+      <h1 class="text-3xl">No user Data</h1>
     </div>
   </main>
 </template>

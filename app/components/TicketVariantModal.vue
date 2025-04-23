@@ -4,22 +4,21 @@ import type { ConcertVariantInterface, Meta } from "~~/types/concertVariantTypes
 import { ref, watch } from "vue";
 import { useVariantDetail } from "~~/composables/useEvent";
 import { fetchSeatData } from "~~/composables/useVariantSeatSocket";
-import type { AvailableSeatDataObj, Seat } from "~~/types/concertSeatTypes";
+import type { AvailableSeatDataObj } from "~~/types/concertSeatTypes";
+import type { selectedSeatsPayload, selectedVariantPayload } from "~~/types/payloadTypes";
 
 // Props
 const props = defineProps<{
   concertId: number;
   variants: VariantInterface[];
   isOpen: boolean;
+  isRounds: boolean;
 }>();
 
 // Emits
 const emit = defineEmits<{
   (e: "close"): void;
-  (
-    e: "select-variant",
-    payload: { variantId: number; quantity: number; selectedSeats?: Seat[] }
-  ): void;
+  (e: "select-variant", payload: selectedVariantPayload): void;
 }>();
 
 // State for quantity selection per variant
@@ -62,9 +61,24 @@ const updateQuantity = (variantId: number, delta: number) => {
 
 // Handle variant selection
 const selectVariant = async (variantId: number) => {
+  const currentVariantInfo = props.variants.find((obj) => variantId === obj.id);
+  const selectedVariantPayload = {
+    id: currentVariantInfo!!.product_id,
+    variant_id: variantId,
+    quantity: quantities.value[variantId] || 1,
+    sku: currentVariantInfo?.sku,
+    price: currentVariantInfo!!.price,
+    gate_open: currentVariantInfo!!.gate_open,
+    gate_close: currentVariantInfo?.gate_close,
+    zone: currentVariantInfo?.zone,
+  };
+  if (props.isRounds) {
+    emit("select-variant", selectedVariantPayload!!);
+    return;
+  }
   const { data, error, pending } = await useVariantDetail(props.concertId, variantId);
   variantInfo.value = data.value?.data ?? null;
-  const quantity = quantities.value[variantId] || 1;
+
   if (variantInfo.value?.meta !== null && variantInfo.value?.special_option) {
     try {
       const fetchedSeatData = await fetchSeatData(
@@ -78,7 +92,6 @@ const selectVariant = async (variantId: number) => {
         } catch (e) {
           console.error("Failed to parse meta JSON:", e);
           seatError.value = "Invalid seat map data";
-          emit("select-variant", { variantId, quantity });
           return;
         }
       } else {
@@ -91,20 +104,24 @@ const selectVariant = async (variantId: number) => {
     } catch (err) {
       console.error("Failed to fetch seat data:", err);
       seatError.value = "Failed to fetch seat data";
-      emit("select-variant", { variantId, quantity });
     }
   } else {
-    emit("select-variant", { variantId, quantity });
+    emit("select-variant", selectedVariantPayload!!);
   }
 };
 // Handle seat selection
-const handleSeatSelection = (selectedSeats: Seat[]) => {
+const handleSeatSelection = (selectedSeats: selectedSeatsPayload[]) => {
   if (selectedSeats.length > 0 && selectedVariantId.value) {
-    emit("select-variant", {
-      variantId: selectedVariantId.value,
+    const selectedVariantSeatsPayload = {
+      id: variantInfo.value!!.product_id,
+      variant_id: selectedVariantId.value,
       quantity: quantities.value[selectedVariantId.value] || 1,
-      selectedSeats,
-    });
+      price: variantInfo.value!!.price,
+      gate_open: variantInfo.value!!.gate_open,
+      zone: variantInfo.value?.zone,
+      seats: selectedSeats,
+    };
+    emit("select-variant", selectedVariantSeatsPayload);
     isSeatMapOpen.value = false;
   }
 };

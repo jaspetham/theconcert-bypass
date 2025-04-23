@@ -29,8 +29,8 @@ export interface ConcertVariantInterface {
   zone: string;
   cost_price: number;
   cost_price_text: number;
-  price: number;
-  price_text: number;
+  price: number | string;
+  price_text: number | string;
   compare_at_price: number;
   compare_at_price_text: number;
   package: boolean;

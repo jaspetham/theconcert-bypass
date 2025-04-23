@@ -3,7 +3,7 @@ export interface AvailableSeatDataObj {
   open_at?: string | number;
 }
 export interface Seat {
-  gourp_id: number;
+  group_id: number;
   id: number;
   meta: string;
   name: string;

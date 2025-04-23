@@ -11,7 +11,6 @@ export const useAuthStore = defineStore('auth', () => {
     function setToken(newToken:string){
         token.value = newToken
         const profileStore = useProfileStore();
-        console.log('setToken' , profileStore)
         profileStore.setUserData();
     }
 

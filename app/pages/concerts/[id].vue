@@ -6,11 +6,14 @@ import { useRoute } from "vue-router";
 import TicketVariantModal from "~/components/TicketVariantModal.vue";
 import type { VariantInterface } from "~~/types/concertVariantsTypes";
 import type { Round } from "~~/types/concertRoundsTypes";
-import type { Seat } from "~~/types/concertSeatTypes";
+import type { selectedVariantPayload } from "~~/types/payloadTypes";
 
 const concertId = Number(useRoute().params.id);
-const { data, error, pending } = await useEventInfo(concertId);
+// api state
+const pending = ref(true);
+const error = ref<string | null>(null);
 const concertInfo = ref<ConcertInfo | null>(null);
+const { data, error: fetchError, pending: fetchPending } = useEventInfo(concertId);
 // Modal state
 const isVariantModalOpen = ref(false);
 const isRoundsModalOpen = ref(false);
@@ -70,17 +73,9 @@ const fetchVariantsForRound = async (roundId: number) => {
 };
 
 // Handle variant selection
-const handleVariantSelection = (payload: {
-  variantId: number;
-  quantity: number;
-  seatData?: Seat[];
-}) => {
+const handleVariantSelection = (payload: selectedVariantPayload) => {
   console.log("Selected variant and seats:", payload);
   isVariantModalOpen.value = false;
-  // Proceed to checkout, e.g.:
-  // if (payload.seatData) {
-  //   // Reserve seats, proceed to payment
-  // }
 };
 
 // Handle round selection
@@ -89,7 +84,14 @@ const handleRoundSelection = (roundId: number) => {
 };
 
 onMounted(() => {
-  concertInfo.value = data.value?.data ?? null;
+  pending.value = fetchPending.value ? true : false;
+  error.value = fetchError.value
+    ? fetchError.value.message ?? "An error occured fetching concert info"
+    : null;
+  concertInfo.value =
+    !fetchError.value && !fetchPending.value
+      ? data.value?.data ?? null
+      : concertInfo.value;
   // Watch isOpen to toggle body overflow
   watch(
     () => isRoundsModalOpen.value || isVariantModalOpen.value,
@@ -122,7 +124,7 @@ onMounted(() => {
         <h1
           class="text-4xl md:text-6xl uppercase font-bold border-b-4 border-neon-red pb-6 tracking-tight break-words"
         >
-          {{ concertInfo.name.en || concertInfo.name.th || "Untitled Event" }}
+          {{ concertInfo.name.en || "Untitled Event" }}
         </h1>
         <div class="absolute -left-4 w-16 h-16 bg-olive-green opacity-50"></div>
       </header>
@@ -132,6 +134,7 @@ onMounted(() => {
         <!-- Image Section -->
         <div class="relative border-4 border-muted-white">
           <NuxtImg
+            densities="1x 2x"
             v-if="concertInfo.images && concertInfo.images.length"
             :src="concertInfo.images[0]?.url"
             :alt="concertInfo.name.en || 'Concert Image'"
@@ -159,10 +162,10 @@ onMounted(() => {
           <div class="border-l-4 border-olive-green pl-4">
             <h2 class="text-xl uppercase font-bold">Venue</h2>
             <p class="text-2xl">
-              {{ concertInfo.venue.name.en || concertInfo.venue.name.th }}
+              {{ concertInfo.venue.name.en }}
             </p>
             <p class="text-2xl">
-              {{ concertInfo.venue.address.en || concertInfo.venue.address.th }}
+              {{ concertInfo.venue.address.en }}
             </p>
           </div>
 
@@ -196,10 +199,8 @@ onMounted(() => {
       <!-- Description -->
       <section class="mt-12 border-t-4 border-muted-white pt-6">
         <h2 class="text-2xl uppercase font-bold mb-4">About</h2>
-        <p
-          class="text-lg leading-relaxed"
-          v-html="concertInfo.description.en || concertInfo.description.th"
-        ></p>
+        <p v-if="concertInfo.description?.en" v-html="concertInfo.description.en"></p>
+        <p v-else>Loading description...</p>
       </section>
 
       <!-- Attributes (if any) -->
@@ -210,8 +211,8 @@ onMounted(() => {
         <h2 class="text-2xl uppercase font-bold mb-4">Details</h2>
         <ul class="space-y-2">
           <li v-for="attr in concertInfo.attributes" :key="attr.id">
-            <strong>{{ attr.name.en || attr.name.th }}:</strong>
-            {{ attr.items.map((item) => item.name.en || item.name.th).join(", ") }}
+            <strong>{{ attr.name.en }}:</strong>
+            {{ attr.items.map((item) => item.name.en).join(", ") }}
           </li>
         </ul>
       </section>
@@ -232,6 +233,7 @@ onMounted(() => {
 
     <!-- Variants Modal -->
     <TicketVariantModal
+      :is-rounds="rounds ? true : false"
       :is-open="isVariantModalOpen"
       :concert-id="concertId"
       :variants="variants"

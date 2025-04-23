@@ -6,7 +6,6 @@ export const useProfileStore = defineStore("profile", () => {
     const getUserData = computed(() => userData.value ? userData.value : null);
 
     async function setUserData(){
-        console.log('setUserData')
         const { data } = await useUserProfile();
         userData.value = data.value?.response
     }

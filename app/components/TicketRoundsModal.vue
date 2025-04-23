@@ -55,7 +55,7 @@ const emit = defineEmits<{
           <div class="flex justify-between items-start">
             <div>
               <h3 class="text-xl uppercase font-bold">
-                {{ round.name.en || round.name.th || "Round" }}
+                {{ round.name.en || "Round" }}
               </h3>
               <p class="text-lg">{{ round.show_time.text_full }}</p>
               <p

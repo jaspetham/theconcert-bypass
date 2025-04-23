@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { useHighlightConcerts } from "~~/composables/useHighlightConcerts";
 import type { ConcertInterface } from "~~/types/highlightConcertsTypes";
-import { ref, onMounted } from "vue";
 
 const { data, error, pending } = await useHighlightConcerts();
-const concerts = ref<ConcertInterface[] | null>(null);
-
-onMounted(() => {
-  concerts.value = data.value?.data.record ?? null; // Safely handle null or undefined
-});
+const concerts: ComputedRef<ConcertInterface[]> = computed(
+  () => data.value?.data.record ?? []
+);
 </script>
 
 <template>
@@ -16,7 +13,7 @@ onMounted(() => {
     <div v-if="pending" class="text-gray-500 text-lg">Loading...</div>
     <div v-if="error" class="text-red-500 text-lg">{{ error.message }}</div>
     <div
-      v-if="concerts && concerts.length > 0"
+      v-if="concerts.length > 0"
       class="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3"
     >
       <div
@@ -27,6 +24,7 @@ onMounted(() => {
         <!-- Image -->
         <div class="w-full h-[300px]">
           <NuxtImg
+            densities="1x 2x"
             :key="concert.images[0]?.id"
             width="375"
             height="300"
@@ -63,15 +61,36 @@ onMounted(() => {
           </div>
 
           <!-- Time -->
-          <div class="mt-4 text-md text-gray-400">
-            <p>
-              <strong>Start:</strong>
-              {{ new Date(concert.show_time.start).toLocaleString() }}
-            </p>
-            <p>
-              <strong>End:</strong> {{ new Date(concert.show_time.end).toLocaleString() }}
-            </p>
-          </div>
+          <p>
+            <strong>Start:</strong>
+            {{
+              new Date(concert.show_time.start).toLocaleString("en-US", {
+                timeZone: "Asia/Bangkok",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+              })
+            }}
+          </p>
+          <p>
+            <strong>End:</strong>
+            {{
+              new Date(concert.show_time.end).toLocaleString("en-US", {
+                timeZone: "Asia/Bangkok",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+              })
+            }}
+          </p>
 
           <!-- View Details -->
           <div class="mt-6">

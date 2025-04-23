@@ -1,8 +1,9 @@
 import { useAuthStore } from "~~/stores/auth";
 
 export function useApiFetch<T = any>(
+  apiName: string,
   path: string,
-  options:any = {}
+  options: any = {}
 ) {
   const auth = useAuthStore();
   const config = useRuntimeConfig();
@@ -11,14 +12,17 @@ export function useApiFetch<T = any>(
   const url = isAbsolute ? path : `${config.public.baseUrl}${path}`;
 
   const token = auth.token?.replace(/^Bearer\s/, "");
-
-  return useFetch<T>(url, {
-    ...options,
-    baseURL: "", // force disable Nuxt default baseURL
-    headers: {
-      ...(options.headers || {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  return useAsyncData<T>(
+    `Event ${apiName}`,
+    async () => {
+      return await $fetch<T>(url, {
+        headers: {
+          ...(options.headers || {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        params: options.params ?? {},
+      });
     },
-    params: options.params ?? {},
-  });
+    { lazy: true }
+  );
 }
