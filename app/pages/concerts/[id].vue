@@ -9,11 +9,10 @@ import type { Round } from "~~/types/concertRoundsTypes";
 import type { selectedVariantPayload } from "~~/types/payloadTypes";
 
 const concertId = Number(useRoute().params.id);
-// api state
-const pending = ref(true);
-const error = ref<string | null>(null);
+const { data, error, pending } = await useEventInfo(concertId);
+// const concertInfo: ComputedRef<ConcertInfo[]> = computed(() => data.value?.data ?? null);
 const concertInfo = ref<ConcertInfo | null>(null);
-const { data, error: fetchError, pending: fetchPending } = useEventInfo(concertId);
+const isLoading = ref(true);
 // Modal state
 const isVariantModalOpen = ref(false);
 const isRoundsModalOpen = ref(false);
@@ -83,15 +82,10 @@ const handleRoundSelection = (roundId: number) => {
   fetchVariantsForRound(roundId);
 };
 
-onMounted(() => {
-  pending.value = fetchPending.value ? true : false;
-  error.value = fetchError.value
-    ? fetchError.value.message ?? "An error occured fetching concert info"
-    : null;
-  concertInfo.value =
-    !fetchError.value && !fetchPending.value
-      ? data.value?.data ?? null
-      : concertInfo.value;
+onMounted(async () => {
+  const { data, error } = await useEventInfo(concertId);
+  concertInfo.value = data.value?.data ?? null;
+  isLoading.value = false;
   // Watch isOpen to toggle body overflow
   watch(
     () => isRoundsModalOpen.value || isVariantModalOpen.value,
@@ -216,11 +210,6 @@ onMounted(() => {
           </li>
         </ul>
       </section>
-    </div>
-
-    <!-- Fallback -->
-    <div v-else class="flex items-center justify-center min-h-screen">
-      <div class="text-xl uppercase border-4 border-neon-red p-4">No Event Found</div>
     </div>
 
     <!-- Rounds Modal -->

@@ -70,9 +70,8 @@ const selectVariant = async (variantId: number) => {
     price: currentVariantInfo!!.price,
     gate_open: currentVariantInfo!!.gate_open,
     gate_close: currentVariantInfo?.gate_close,
-    zone: currentVariantInfo?.zone,
   };
-  if (props.isRounds) {
+  if (props.isRounds && props.variants.find((variant) => variant.zone === null)) {
     emit("select-variant", selectedVariantPayload!!);
     return;
   }
