@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { useEventInfo, useEventRounds, useEventVariants } from "~~/composables/useEvent";
+import { useEventInfo, useEventVariants, useEventRounds } from "~~/composables/useEvent";
 import type { ConcertInfo } from "~~/types/concertInfoTypes";
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import TicketVariantModal from "~/components/TicketVariantModal.vue";
+import TicketRoundsModal from "~/components/TicketRoundsModal.vue";
 import type { VariantInterface } from "~~/types/concertVariantsTypes";
 import type { Round } from "~~/types/concertRoundsTypes";
 import type { selectedVariantPayload } from "~~/types/payloadTypes";
 
-const concertId = Number(useRoute().params.id);
-const { data, error, pending } = await useEventInfo(concertId);
-// const concertInfo: ComputedRef<ConcertInfo[]> = computed(() => data.value?.data ?? null);
-const concertInfo = ref<ConcertInfo | null>(null);
+const route = useRoute();
+const concertId = computed(() => Number(route.params.id));
+const { data, error, pending, refresh } = useEventInfo(concertId.value);
+const concertInfo = computed(() => data.value?.data ?? null);
 const isLoading = ref(true);
+const errorRef = ref<Error | null>(null);
+
 // Modal state
 const isVariantModalOpen = ref(false);
 const isRoundsModalOpen = ref(false);
@@ -22,7 +25,9 @@ const rounds = ref<Round[]>([]);
 // Fetch tickets (variants or rounds)
 const fetchTickets = async () => {
   // Try useEventVariants first
-  let { data: variantsData, error: variantsError } = await useEventVariants(concertId);
+  let { data: variantsData, error: variantsError } = await useEventVariants(
+    concertId.value
+  );
   if (variantsError.value) {
     console.error("Failed to fetch variants:", variantsError.value);
     // Proceed to try rounds even if variants fail
@@ -37,7 +42,7 @@ const fetchTickets = async () => {
   }
 
   // If no variants, try useEventRounds
-  const { data: roundsData, error: roundsError } = await useEventRounds(concertId);
+  const { data: roundsData, error: roundsError } = await useEventRounds(concertId.value);
   if (roundsError.value) {
     console.error("Failed to fetch rounds:", roundsError.value);
     return;
@@ -73,7 +78,13 @@ const fetchVariantsForRound = async (roundId: number) => {
 
 // Handle variant selection
 const handleVariantSelection = (payload: selectedVariantPayload) => {
-  console.log("Selected variant and seats:", payload);
+  if (payload.seats) {
+    payload.symbol = concertInfo.value?.price.currency_symbol;
+    payload.currency_code = concertInfo.value?.price.currency_code.toLowerCase();
+  } else {
+    payload.price = concertInfo.value?.price.currency_symbol + payload.price;
+  }
+  console.log("Selected payload:", payload);
   isVariantModalOpen.value = false;
 };
 
@@ -82,32 +93,51 @@ const handleRoundSelection = (roundId: number) => {
   fetchVariantsForRound(roundId);
 };
 
+// Initial fetch and watch concertId
 onMounted(async () => {
-  const { data, error } = await useEventInfo(concertId);
-  concertInfo.value = data.value?.data ?? null;
+  await refresh();
   isLoading.value = false;
-  // Watch isOpen to toggle body overflow
-  watch(
-    () => isRoundsModalOpen.value || isVariantModalOpen.value,
-    (isOpen) => {
-      document.body.style.overflow = isOpen ? "hidden" : "";
-    },
-    { immediate: true }
-  );
+  errorRef.value = error.value ?? null;
 });
+
+// Watch concertId for route changes
+watch(
+  concertId,
+  async (newId) => {
+    isLoading.value = true;
+    await refresh();
+    isLoading.value = false;
+    errorRef.value = error.value ?? null;
+    // Reset modals and ticket data
+    isVariantModalOpen.value = false;
+    isRoundsModalOpen.value = false;
+    variants.value = [];
+    rounds.value = [];
+  },
+  { immediate: false }
+);
+
+// Watch modal state to toggle body overflow
+watch(
+  () => isRoundsModalOpen.value || isVariantModalOpen.value,
+  (isOpen) => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
   <div class="bg-charcoal text-muted-white font-mono">
     <!-- Loading State -->
-    <div v-if="pending" class="flex items-center justify-center min-h-screen">
+    <div v-if="isLoading" class="flex items-center justify-center min-h-screen">
       <div class="text-2xl uppercase border-4 border-neon-red p-4">Loading...</div>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="flex items-center justify-center min-h-screen">
+    <div v-else-if="errorRef" class="flex items-center justify-center min-h-screen">
       <div class="text-xl uppercase border-4 border-neon-red p-4 bg-charcoal">
-        Error: {{ error.message }}
+        Error: {{ errorRef.message }}
       </div>
     </div>
 
@@ -128,7 +158,7 @@ onMounted(async () => {
         <!-- Image Section -->
         <div class="relative border-4 border-muted-white">
           <NuxtImg
-            densities="1x 2x"
+            density="1x 2x"
             v-if="concertInfo.images && concertInfo.images.length"
             :src="concertInfo.images[0]?.url"
             :alt="concertInfo.name.en || 'Concert Image'"
