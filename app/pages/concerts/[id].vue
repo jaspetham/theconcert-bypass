@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useEventInfo, useEventVariants, useEventRounds } from "~~/composables/useEvent";
-import type { ConcertInfo } from "~~/types/concertInfoTypes";
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import TicketVariantModal from "~/components/TicketVariantModal.vue";
@@ -25,16 +24,18 @@ const rounds = ref<Round[]>([]);
 // Fetch tickets (variants or rounds)
 const fetchTickets = async () => {
   // Try useEventVariants first
-  let { data: variantsData, error: variantsError } = await useEventVariants(
-    concertId.value
-  );
-  if (variantsError.value) {
-    console.error("Failed to fetch variants:", variantsError.value);
-    // Proceed to try rounds even if variants fail
+  const variantsFetch = useEventVariants(concertId.value);
+  let variantsData, variantsError;
+  try {
+    variantsData = await variantsFetch.fetch();
+    variantsError = null;
+  } catch (err) {
+    variantsError = err;
+    console.error("Failed to fetch variants:", err);
   }
 
   // Check if variants exist
-  const variantRecords = variantsData.value?.data.record || [];
+  const variantRecords = variantsData?.data.record || [];
   if (variantRecords.length > 0) {
     variants.value = variantRecords;
     isVariantModalOpen.value = true;
@@ -42,14 +43,18 @@ const fetchTickets = async () => {
   }
 
   // If no variants, try useEventRounds
-  const { data: roundsData, error: roundsError } = await useEventRounds(concertId.value);
-  if (roundsError.value) {
-    console.error("Failed to fetch rounds:", roundsError.value);
-    return;
+  const roundsFetch = useEventRounds(concertId.value);
+  let roundsData, roundsError;
+  try {
+    roundsData = await roundsFetch.fetch();
+    roundsError = null;
+  } catch (err) {
+    roundsError = err;
+    console.error("Failed to fetch rounds:", err);
   }
 
   // Check if rounds exist
-  const roundRecords = roundsData.value?.data.record || [];
+  const roundRecords = roundsData?.data.record || [];
   if (roundRecords.length > 0) {
     rounds.value = roundRecords;
     isRoundsModalOpen.value = true;
@@ -60,13 +65,17 @@ const fetchTickets = async () => {
 
 // Fetch variants for a specific round
 const fetchVariantsForRound = async (roundId: number) => {
-  const { data: variantsData, error: variantsError } = await useEventVariants(roundId);
-  if (variantsError.value) {
-    console.error(`Failed to fetch variants for round ${roundId}:`, variantsError.value);
-    return;
+  const variantsFetch = useEventVariants(concertId.value);
+  let variantsData, variantsError;
+  try {
+    variantsData = await variantsFetch.fetch();
+    variantsError = null;
+  } catch (err) {
+    variantsError = err;
+    console.error("Failed to fetch variants:", err);
   }
 
-  const variantRecords = variantsData.value?.data.record || [];
+  const variantRecords = variantsData?.data.record || [];
   if (variantRecords.length > 0) {
     variants.value = variantRecords;
     isRoundsModalOpen.value = false;
@@ -98,6 +107,15 @@ onMounted(async () => {
   await refresh();
   isLoading.value = false;
   errorRef.value = error.value ?? null;
+
+  // Watch modal state to toggle body overflow
+  watch(
+    () => isRoundsModalOpen.value || isVariantModalOpen.value,
+    (isOpen) => {
+      document.body.style.overflow = isOpen ? "hidden" : "";
+    },
+    { immediate: true }
+  );
 });
 
 // Watch concertId for route changes
@@ -115,15 +133,6 @@ watch(
     rounds.value = [];
   },
   { immediate: false }
-);
-
-// Watch modal state to toggle body overflow
-watch(
-  () => isRoundsModalOpen.value || isVariantModalOpen.value,
-  (isOpen) => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
-  },
-  { immediate: true }
 );
 </script>
 

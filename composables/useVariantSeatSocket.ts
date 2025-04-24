@@ -31,7 +31,7 @@ export async function fetchSeatData(
         let parsedMessages: WebSocketMessage[] = [];
 
         ws.onopen = () => {
-          console.log(`✅ WebSocket ${index} opened for ${url}`);
+        //   console.log(`✅ WebSocket ${index} opened for ${url}`);
         };
 
         ws.onmessage = (event: MessageEvent) => {
@@ -55,9 +55,9 @@ export async function fetchSeatData(
                   if (msg.t === "h") {
                     ws.send(JSON.stringify({ t: "h" }));
                   } else if (msg.t === "c" && !hasSentQuery) {
-                    console.log(
-                      `🔗 Firebase connection established for ${url}`
-                    );
+                    // console.log(
+                    //   `🔗 Firebase connection established for ${url}`
+                    // );
                     ws.send(
                       JSON.stringify({
                         t: "d",
@@ -72,11 +72,11 @@ export async function fetchSeatData(
 
                   startIndex = i + 1;
                 } catch (e) {
-                  console.error(
-                    `❌ JSON parsing error in ${url}:`,
-                    e,
-                    `Message: ${potentialJson}`
-                  );
+                //   console.error(
+                //     `❌ JSON parsing error in ${url}:`,
+                //     e,
+                //     `Message: ${potentialJson}`
+                //   );
                   // Reset buffer to avoid accumulating garbage
                   messageBuffer = "";
                   startIndex = 0;
@@ -88,7 +88,7 @@ export async function fetchSeatData(
               !/[{\s]/.test(messageBuffer[i] ?? '')
             ) {
               // Handle non-JSON keep-alives (e.g., "0", "3")
-              console.debug(`Ignored non-JSON message in ${url}:`, messageBuffer);
+            //   console.debug(`Ignored non-JSON message in ${url}:`, messageBuffer);
               messageBuffer = "";
               startIndex = 0;
               return;
@@ -105,7 +105,7 @@ export async function fetchSeatData(
         };
 
         ws.onclose = () => {
-          console.log(`🔌 WebSocket ${index} closed for ${url}`);
+        //   console.log(`🔌 WebSocket ${index} closed for ${url}`);
           const relevantMessage = parsedMessages.find(
             (msg) => msg.t === "d" && msg.d?.b?.p === seatPath
           );
@@ -137,7 +137,7 @@ export async function fetchSeatData(
         };
 
         ws.onerror = (err) => {
-          console.error(`❌ WebSocket ${index} error for ${url}:`, err);
+        //   console.error(`❌ WebSocket ${index} error for ${url}:`, err);
           resolve(null); // Continue with other connections
         };
       })

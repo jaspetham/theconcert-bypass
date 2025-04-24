@@ -12,46 +12,70 @@ const defaultParams = {
 export function useEventInfo(eventId: number) {
   return useApiFetch<ConcertInfoResponse>("Info", `${eventId}`, {
     params: defaultParams,
+    execute: false,
   });
 }
 
 export function useEventStages(eventId: number) {
-  return useApiFetch("Stages", `${eventId}/stages`);
+  return useApiFetch("Stages", `${eventId}/stages`, {
+    execute: false,
+  });
 }
 
 export function useEventZones(eventId: number) {
   return useApiFetch("Zones", `${eventId}/zones`, {
     params: defaultParams,
+    execute: false,
   });
 }
 
 export function useEventStocks(eventId: number) {
-  return useApiFetch("Stocks", `${eventId}/stocks`, {
+  const result = useApiFetch("Stocks", `${eventId}/stocks`, {
     params: defaultParams,
+    execute: false,
   });
+  return {
+    ...result,
+    fetch: result.execute, // Promise-based fetch
+  };
 }
 
 export function useEventVariants(eventId: number) {
-  return useApiFetch<ConcertVariantsResponse>(
+  const result = useApiFetch<ConcertVariantsResponse>(
     "Variants",
     `${eventId}/variants`,
     {
       params: defaultParams,
+      execute: false,
     }
   );
+  return {
+    ...result,
+    fetch: result.execute, // Promise-based fetch
+  };
 }
 export function useEventRounds(eventId: number) {
-  return useApiFetch<ConcertRoundsResponse>("Rounds", `${eventId}/round`, {
+  const result = useApiFetch<ConcertRoundsResponse>("Rounds", `${eventId}/round`, {
     params: defaultParams,
+    execute: false,
   });
+   return {
+     ...result,
+     fetch: result.execute, // Promise-based fetch
+   };
 }
 
 export function useVariantDetail(eventId: number, variantId: number) {
-  return useApiFetch<ConcertVariantResponse>(
+  const result = useApiFetch<ConcertVariantResponse>(
     "Variant Details",
     `${eventId}/variants/${variantId}`,
     {
       params: defaultParams,
+      execute: false,
     }
   );
+  return {
+    ...result,
+    fetch: result.execute, // Promise-based fetch
+  };
 }

@@ -75,8 +75,18 @@ const selectVariant = async (variantId: number) => {
     emit("select-variant", selectedVariantPayload!!);
     return;
   }
-  const { data, error, pending } = await useVariantDetail(props.concertId, variantId);
-  variantInfo.value = data.value?.data ?? null;
+  //   const { data, error, pending } = await useVariantDetail(props.concertId, variantId);
+  const variantsFetch = useVariantDetail(props.concertId, variantId);
+  let variantsData, variantsError;
+  try {
+    variantsData = await variantsFetch.fetch();
+    variantsError = null;
+  } catch (err) {
+    variantsError = err;
+    console.error("Failed to fetch variants:", err);
+  }
+
+  variantInfo.value = variantsData?.data ?? null;
 
   if (variantInfo.value?.meta !== null && variantInfo.value?.special_option) {
     try {
