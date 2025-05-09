@@ -1,5 +1,3 @@
-import { useProfileStore } from "./useProfileStore";
-
 export const useAuthStore = defineStore('auth', () => {
     const token = useCookie<string | null>('auth_token', {
         maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -10,8 +8,6 @@ export const useAuthStore = defineStore('auth', () => {
 
     function setToken(newToken:string){
         token.value = newToken
-        const profileStore = useProfileStore();
-        profileStore.setUserData();
     }
 
     function clearToken(){

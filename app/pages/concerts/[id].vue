@@ -6,7 +6,9 @@ import TicketVariantModal from "~/components/TicketVariantModal.vue";
 import TicketRoundsModal from "~/components/TicketRoundsModal.vue";
 import type { VariantInterface } from "~~/types/concertVariantsTypes";
 import type { Round } from "~~/types/concertRoundsTypes";
-import type { selectedVariantPayload } from "~~/types/payloadTypes";
+import type { cartPayload, selectedVariantPayload } from "~~/types/payloadTypes";
+import { useProfileStore } from "~~/stores/useProfileStore";
+import { useAddCart } from "../../../composables/usePayment";
 
 const route = useRoute();
 const concertId = computed(() => Number(route.params.id));
@@ -86,15 +88,27 @@ const fetchVariantsForRound = async (roundId: number) => {
 };
 
 // Handle variant selection
-const handleVariantSelection = (payload: selectedVariantPayload) => {
+const handleVariantSelection = async (payload: selectedVariantPayload) => {
   if (payload.seats) {
     payload.symbol = concertInfo.value?.price.currency_symbol;
     payload.currency_code = concertInfo.value?.price.currency_code.toLowerCase();
   } else {
     payload.price = concertInfo.value?.price.currency_symbol + payload.price;
   }
-  console.log("Selected payload:", payload);
   isVariantModalOpen.value = false;
+
+  const { getUserData } = useProfileStore();
+  const finalPaylod: cartPayload = {
+    cart_id: getUserData!!.id,
+    products: [payload],
+  };
+
+  try {
+    const cartResult = await useAddCart(finalPaylod).execute();
+    console.log("Cart added:", cartResult);
+  } catch (err) {
+    console.error("Failed to add to cart:", err);
+  }
 };
 
 // Handle round selection

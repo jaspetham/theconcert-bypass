@@ -28,6 +28,8 @@ export function useApiFetch<T = any>(
     error.value = null;
     try {
       const result = await $fetch<T>(url, {
+        method: options.method || "GET",
+        body: options.body ? JSON.stringify(options.body) : undefined,
         headers: {
           ...(options.headers || {}),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),

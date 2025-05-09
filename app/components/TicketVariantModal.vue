@@ -66,7 +66,7 @@ const selectVariant = async (variantId: number) => {
     id: currentVariantInfo!!.product_id,
     variant_id: variantId,
     quantity: quantities.value[variantId] || 1,
-    sku: currentVariantInfo?.sku,
+    sku: currentVariantInfo?.name,
     price: currentVariantInfo!!.price,
     gate_open: currentVariantInfo!!.gate_open,
     gate_close: currentVariantInfo?.gate_close,
@@ -75,7 +75,6 @@ const selectVariant = async (variantId: number) => {
     emit("select-variant", selectedVariantPayload!!);
     return;
   }
-  //   const { data, error, pending } = await useVariantDetail(props.concertId, variantId);
   const variantsFetch = useVariantDetail(props.concertId, variantId);
   let variantsData, variantsError;
   try {
